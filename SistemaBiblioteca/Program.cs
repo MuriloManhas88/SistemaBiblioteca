@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaBiblioteca.Data;
+using SistemaBiblioteca.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,12 @@ builder.Services.AddSwaggerGen();
 // Configurar banco de dados em memória
 builder.Services.AddDbContext<BibliotecaContext>(options =>
     options.UseInMemoryDatabase("BibliotecaDB"));
+
+// Registrar serviços
+builder.Services.AddScoped<ILivroService, LivroService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IEmprestimoService, EmprestimoService>();
+builder.Services.AddScoped<IRelatorioService, RelatorioService>();
 
 var app = builder.Build();
 
