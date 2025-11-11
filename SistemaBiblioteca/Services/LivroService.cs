@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SistemaBiblioteca.Data;
 using SistemaBiblioteca.Models;
 using SistemaBiblioteca.Enums;
+using SistemaBiblioteca.Exceptions;
 
 namespace SistemaBiblioteca.Services
 {
@@ -35,7 +36,7 @@ namespace SistemaBiblioteca.Services
         {
             var livro = await _context.Livros.FindAsync(isbn);
             if (livro == null)
-                throw new Exception($"Livro com ISBN {isbn} não encontrado.");
+                throw new LivroNaoEncontradoException(isbn);
 
             livro.Status = novoStatus;
             await _context.SaveChangesAsync();

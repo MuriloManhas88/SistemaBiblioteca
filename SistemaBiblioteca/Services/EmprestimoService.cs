@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SistemaBiblioteca.Data;
 using SistemaBiblioteca.Models;
 using SistemaBiblioteca.Enums;
+using SistemaBiblioteca.Exceptions;
 
 namespace SistemaBiblioteca.Services
 {
@@ -10,12 +11,14 @@ namespace SistemaBiblioteca.Services
         private readonly BibliotecaContext _context;
         private readonly ILivroService _livroService;
         private readonly IUsuarioService _usuarioService;
+        private readonly IMultaService _multaService;
 
-        public EmprestimoService(BibliotecaContext context, ILivroService livroService, IUsuarioService usuarioService)
+        public EmprestimoService(BibliotecaContext context, ILivroService livroService, IUsuarioService usuarioService, IMultaService multaService)
         {
             _context = context;
             _livroService = livroService;
             _usuarioService = usuarioService;
+            _multaService = multaService;
         }
 
         public async Task<Emprestimo> RegistrarEmprestimo(string isbn, int usuarioId)
@@ -23,18 +26,22 @@ namespace SistemaBiblioteca.Services
             // Validar se o livro existe e está disponível
             var livro = await _livroService.ObterLivroPorISBN(isbn);
             if (livro == null)
-                throw new Exception($"Livro com ISBN {isbn} não encontrado.");
+                throw new LivroNaoEncontradoException(isbn);
 
             if (livro.Status != StatusLivro.DISPONIVEL)
-                throw new Exception("Livro não está disponível para empréstimo.");
+                throw new LivroIndisponivelException(isbn);
 
             // Validar se o usuário pode pegar empréstimo
             var usuario = await _usuarioService.ObterUsuarioPorId(usuarioId);
             if (usuario == null)
-                throw new Exception($"Usuário com ID {usuarioId} não encontrado.");
+                throw new UsuarioNaoEncontradoException(usuarioId);
 
             if (!await _usuarioService.UsuarioPodePegarEmprestimo(usuarioId))
-                throw new Exception("Usuário já possui 3 empréstimos ativos.");
+                throw new LimiteEmprestimosExcedidoException(usuarioId);
+
+            // Validar se o usuário tem multas pendentes
+            if (await _multaService.UsuarioTemMultasPendentes(usuarioId))
+                throw new MultaPendenteException(usuarioId);
 
             // Calcular prazo de devolução baseado no tipo de usuário
             int diasEmprestimo = usuario.Tipo == TipoUsuario.PROFESSOR ? 30 : 14;
@@ -62,10 +69,10 @@ namespace SistemaBiblioteca.Services
         {
             var emprestimo = await _context.Emprestimos.FindAsync(emprestimoId);
             if (emprestimo == null)
-                throw new Exception($"Empréstimo com ID {emprestimoId} não encontrado.");
+                throw new EmprestimoNaoEncontradoException(emprestimoId);
 
             if (emprestimo.Status != StatusEmprestimo.ATIVO)
-                throw new Exception("Empréstimo não está ativo.");
+                throw new EmprestimoInvalidoException("Empréstimo não está ativo.");
 
             emprestimo.DataRealDevolucao = DateTime.Now;
             emprestimo.Status = StatusEmprestimo.FINALIZADO;

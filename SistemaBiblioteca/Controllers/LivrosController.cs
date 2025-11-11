@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SistemaBiblioteca.Models;
 using SistemaBiblioteca.Services;
 using SistemaBiblioteca.Enums;
+using SistemaBiblioteca.Exceptions;
 
 namespace SistemaBiblioteca.Controllers
 {
@@ -48,9 +49,13 @@ namespace SistemaBiblioteca.Controllers
                 var livro = await _livroService.AtualizarStatusLivro(isbn, novoStatus);
                 return Ok(livro);
             }
-            catch (Exception ex)
+            catch (LivroNaoEncontradoException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (BibliotecaException ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

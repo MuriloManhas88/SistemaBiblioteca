@@ -16,6 +16,7 @@ builder.Services.AddDbContext<BibliotecaContext>(options =>
 // Registrar serviços
 builder.Services.AddScoped<ILivroService, LivroService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IMultaService, MultaService>();
 builder.Services.AddScoped<IEmprestimoService, EmprestimoService>();
 builder.Services.AddScoped<IRelatorioService, RelatorioService>();
 

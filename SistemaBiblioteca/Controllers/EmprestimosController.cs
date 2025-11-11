@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaBiblioteca.Models;
 using SistemaBiblioteca.Services;
+using SistemaBiblioteca.Exceptions;
 
 namespace SistemaBiblioteca.Controllers
 {
@@ -23,7 +24,15 @@ namespace SistemaBiblioteca.Controllers
                 var emprestimo = await _emprestimoService.RegistrarEmprestimo(request.ISBN, request.UsuarioId);
                 return CreatedAtAction(nameof(ObterEmprestimo), new { id = emprestimo.Id }, emprestimo);
             }
-            catch (Exception ex)
+            catch (LivroNaoEncontradoException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (UsuarioNaoEncontradoException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BibliotecaException ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -37,7 +46,11 @@ namespace SistemaBiblioteca.Controllers
                 var emprestimo = await _emprestimoService.RegistrarDevolucao(id);
                 return Ok(emprestimo);
             }
-            catch (Exception ex)
+            catch (EmprestimoNaoEncontradoException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BibliotecaException ex)
             {
                 return BadRequest(ex.Message);
             }
